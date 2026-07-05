@@ -103,10 +103,14 @@ DWIConverter::OrientForFSLConventions(const bool toFSL)
       arrayAxisFlip[i] =
         (DicomDesiredDirectionFlipsWRTLPS[i] * direction(i, i) < -0.5); // i.e. a negative magnitude greater than 0.5
     }
-    // This is necesssary to ensure that the BVEC file is consistent with FSL orientation assumptions
-    for (auto & m_DiffusionVector : this->m_DiffusionVectors)
+    // This is necesssary to ensure that the BVEC file is consistent with FSL orientation assumptions.
+    // Diffusion gradient vectors are 3-dimensional; the 4th image axis has no gradient component.
+    if (i < 3)
     {
-      m_DiffusionVector[i] *= (arrayAxisFlip[i] ? -1 : 1);
+      for (auto & m_DiffusionVector : this->m_DiffusionVectors)
+      {
+        m_DiffusionVector[i] *= (arrayAxisFlip[i] ? -1 : 1);
+      }
     }
   }
   /* Debugging information for identifying orientation!
