@@ -76,6 +76,29 @@
 
 #include <mutex>
 
+// PROTOTYPE: adopt ITK's Eigen-backed symmetric solver for the per-class
+// covariance inverse below, when a new-enough ITK provides it. Gated on a
+// compile-time capability check so this still builds against the currently
+// pinned ITK (legacy vnl_matrix_inverse path).
+#if __has_include(<itkMathLDLT.h>)
+#  include <itkMathLDLT.h>
+#endif
+namespace em_detail
+{
+// Inverse of a SYMMETRIC matrix via itk::Math::InverseSymmetric (Eigen LDLT,
+// single factorization) when available; otherwise vnl_matrix_inverse. A
+// covariance matrix is symmetric positive-(semi)definite.
+inline vnl_matrix<double>
+SymmetricInverse(const vnl_matrix<double> & A)
+{
+#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+  return itk::Math::InverseSymmetric(A);
+#else
+  return vnl_matrix_inverse<double>(A).inverse();
+#endif
+}
+} // namespace em_detail
+
 static const FloatingPrecision KNN_InclusionThreshold = 0.85F;
 
 
@@ -1151,7 +1174,7 @@ EMSegmentationFilter<TInputImage, TProbabilityImage>::ComputeOnePosterior(
   const FloatingPrecision denom = std::pow(2 * itk::Math::pi, numModalities / 2.0) * std::sqrt(detcov) + itk::Math::eps;
   const FloatingPrecision invdenom = 1.0 / denom;
   CHECK_NAN(invdenom, __FILE__, __LINE__, "\n  denom:" << denom);
-  const MatrixType invcov{ MatrixInverseType(currCovariance).as_matrix() };
+  const MatrixType invcov{ em_detail::SymmetricInverse(currCovariance) };
 
   auto post = TProbabilityImage::New();
   post->CopyInformation(prior);
