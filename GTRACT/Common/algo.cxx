@@ -36,14 +36,46 @@
 
 #include "algo.h"
 
+// PROTOTYPE: adopt ITK's Eigen-backed symmetric solver for the normal-equations
+// pseudo-inverse below, when a new-enough ITK provides it. Gated on a
+// compile-time capability check so this still builds against the currently
+// pinned ITK (legacy vnl_matrix_inverse path).
+#if __has_include(<itkMathLDLT.h>)
+#  include <itkMathLDLT.h>
+#endif
+
+namespace
+{
+// Inverse of a SYMMETRIC matrix. With itk::Math::SolveSymmetric available, build
+// the inverse column-by-column via LDLT solves (A X = I); otherwise fall back to
+// vnl_matrix_inverse. (M^T M in the normal equations is symmetric PD.)
+inline vnl_matrix<float>
+SymmetricInverse(const vnl_matrix<float> & A)
+{
+#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+  const unsigned int n = A.rows();
+  vnl_matrix<float>  inv(n, n);
+  for (unsigned int c = 0; c < n; ++c)
+  {
+    vnl_vector<float> e(n, 0.0f);
+    e[c] = 1.0f;
+    inv.set_column(c, itk::Math::SolveSymmetric(A, e));
+  }
+  return inv;
+#else
+  return vnl_matrix_inverse<float>(A).inverse();
+#endif
+}
+} // namespace
+
 TMatrix
 Matrix_Inverse(const TMatrix & M)
 {
   //  const int NumberOfDirections=M.rows();
   TMatrix M_T = M.transpose();
 
-  vnl_matrix_inverse<float> M_Inverse(M_T * M);
-  return M_Inverse.inverse() * M_T;
+  // Left pseudo-inverse (M^T M)^-1 M^T; M^T M is symmetric positive-definite.
+  return SymmetricInverse(M_T * M) * M_T;
 }
 
 float
