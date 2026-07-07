@@ -32,6 +32,37 @@
 #include "tbb/blocked_range2d.h"
 #include "tbb/parallel_reduce.h"
 
+// PROTOTYPE: adopt ITK's Eigen-backed symmetric solver for the per-class
+// covariance inverse below, when a new-enough ITK provides it. Gated on a
+// compile-time capability check so this still builds against the currently
+// pinned ITK (legacy vnl_matrix_inverse path).
+#if __has_include(<itkMathLDLT.h>)
+#  include <itkMathLDLT.h>
+#endif
+namespace lls_detail
+{
+// Inverse of a SYMMETRIC matrix via itk::Math::SolveSymmetric (LDLT solves of
+// A X = I) when available; otherwise vnl_matrix_inverse. A covariance matrix is
+// symmetric positive-(semi)definite.
+inline vnl_matrix<double>
+SymmetricInverse(const vnl_matrix<double> & A)
+{
+#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+  const unsigned int n = A.rows();
+  vnl_matrix<double> inv(n, n);
+  for (unsigned int c = 0; c < n; ++c)
+  {
+    vnl_vector<double> e(n, 0.0);
+    e[c] = 1.0;
+    inv.set_column(c, itk::Math::SolveSymmetric(A, e));
+  }
+  return inv;
+#else
+  return vnl_matrix_inverse<double>(A).inverse();
+#endif
+}
+} // namespace lls_detail
+
 
 #define USE_HALF_RESOLUTION 1
 #define MIN_SKIP_SIZE 2
@@ -424,8 +455,7 @@ LLSBiasCorrector<TInputImage, TProbabilityImage>::CorrectImages(const unsigned i
   for (unsigned int iclass = 0; iclass < numClasses; ++iclass)
   {
     std::cout << this->m_ListOfClassStatistics[iclass].m_Covariance << std::endl;
-    MatrixInverseType inverse_temp(this->m_ListOfClassStatistics[iclass].m_Covariance);
-    MatrixType        temp = inverse_temp.as_matrix();
+    MatrixType temp = lls_detail::SymmetricInverse(this->m_ListOfClassStatistics[iclass].m_Covariance);
     invCovars.push_back(temp);
   }
 

@@ -103,6 +103,36 @@ benefits more from readability than speed.
 #include "itk_H5Cpp.h"
 #include <BRAINSCommonLib.h>
 
+// PROTOTYPE: adopt ITK's Eigen-backed symmetric solver for the symmetric-Gram
+// inverse in the EPCA training below, when a new-enough ITK provides it. Gated
+// on a compile-time capability check so this still builds against the currently
+// pinned ITK (legacy vnl_matrix_inverse path).
+#if __has_include(<itkMathLDLT.h>)
+#  include <itkMathLDLT.h>
+#endif
+namespace
+{
+// Inverse of a SYMMETRIC matrix via itk::Math::SolveSymmetric (LDLT solves of
+// A X = I) when available; otherwise vnl_matrix_inverse. Zi*Zi^T is symmetric PD.
+inline vnl_matrix<double>
+SymmetricInverse(const vnl_matrix<double> & A)
+{
+#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+  const unsigned int n = A.rows();
+  vnl_matrix<double> inv(n, n);
+  for (unsigned int c = 0; c < n; ++c)
+  {
+    vnl_vector<double> e(n, 0.0);
+    e[c] = 1.0;
+    inv.set_column(c, itk::Math::SolveSymmetric(A, e));
+  }
+  return inv;
+#else
+  return vnl_matrix_inverse<double>(A).inverse();
+#endif
+}
+} // namespace
+
 // D E F I N E S //////////////////////////////////////////////////////////////
 
 // will exit on the first error.
@@ -627,7 +657,7 @@ main(int argc, char * argv[])
     const vnl_matrix<double> Yi =
       (byClassLandmarkMatrix["newLandmarks"][i].second) - (byClassLandmarkMatrix["baseLandmarks"][0].second);
 
-    const vnl_matrix<double>   tmp = vnl_matrix_inverse<double>(Zi * Zi.transpose().as_ref()).as_matrix();
+    const vnl_matrix<double>   tmp = SymmetricInverse(Zi * Zi.transpose().as_ref());
     const vnl_matrix<double> & Zinv{ tmp };
     const vnl_matrix<double>   Ci{ Zinv * (Zi * Yi) };
     M.push_back(W[i] * Ci);
