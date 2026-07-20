@@ -100,3 +100,17 @@ repos:
     stages: [commit-msg]
     always_run: true
     pass_filenames: true
+
+  - id: cli-xml-conformance
+    name: CLI descriptor conformance (Slicer Execution Model)
+    language: system
+    entry: python3 Utilities/Maintenance/check_cli_xml_conformance.py
+    files: '(\.xml$|cli_xml_lib\.py$)'
+    pass_filenames: false
+
+  - id: cli-tool-catalog
+    name: Regenerate docs/tools.md from CLI descriptors
+    language: system
+    entry: python3 Utilities/Maintenance/generate_tool_catalog.py
+    files: '(\.xml$|CMakeLists\.txt$|generate_tool_catalog\.py$)'
+    pass_filenames: false
