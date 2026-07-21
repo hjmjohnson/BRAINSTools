@@ -331,10 +331,12 @@ jobs:
         # Only populate (and later save) when there was a cache miss or a
         # restore-keys fallback hit.  On an exact-key hit the store is already
         # up-to-date; writing it again would waste I/O and cache quota.
-        # ExternalData objects are content-addressed and platform-agnostic, so a
-        # single writer (Linux) populates the shared store; letting both matrix
-        # jobs save the same key races, and the loser's downloads are discarded.
-        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && steps.restore-externaldata.outputs.cache-hit != 'true' }}
+        # ExternalData objects are content-addressed and platform-agnostic, so
+        # push-to-main on Linux is the sole writer of the shared store.  A PR
+        # cannot write to main's cache scope, and a restore-keys fallback leaves
+        # cache-hit='false', so PR runs would each store a private duplicate of
+        # data they only ever read; new hashes persist when the PR merges.
+        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && github.event_name == 'push' && steps.restore-externaldata.outputs.cache-hit != 'true' }}
         shell: bash
         run: |
           # ExternalData downloads objects into ExternalData_BINARY_ROOT/Objects/.
@@ -354,9 +356,9 @@ jobs:
         # Only save on a cache miss (exact key not found) — including fallback
         # restore-keys hits, which also leave cache-hit='false'.  Skipping the
         # save on an exact-key hit avoids redundant writes and conserves the
-        # 10 GB per-repo GitHub Actions cache quota.  Linux is the single writer
-        # of this platform-agnostic store; see the populate step above.
-        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && steps.restore-externaldata.outputs.cache-hit != 'true' }}
+        # 10 GB per-repo GitHub Actions cache quota.  Push-to-main on Linux is
+        # the sole writer of this store; see the populate step above.
+        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && github.event_name == 'push' && steps.restore-externaldata.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/ExternalData
