@@ -12,7 +12,6 @@ OUTPUT = "docs/tools.md"
 
 FRONT_MATTER = """---
 title: Tools
-nav_order: 2
 ---
 
 <!-- GENERATED FILE - DO NOT EDIT.
