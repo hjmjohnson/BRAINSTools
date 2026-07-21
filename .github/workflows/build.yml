@@ -183,7 +183,7 @@ jobs:
         shell: bash
         run: |
           ccache --zero-stats
-          ccache --evict-older-than 7d
+          ccache --evict-older-than 60d
           ccache --show-config
 
       # ── Test data cache (ExternalData) ────────────────────────────────────────
