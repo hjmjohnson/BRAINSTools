@@ -1070,11 +1070,10 @@ ExternalData_add_test( ${BRAINSTools_ExternalData_DATA_MANAGEMENT_TARGET} NAME $
 
 # ITK #6569 corrected the JointHistogramMutualInformation marginals and
 # derivative, so the MIH registrations converge to a different (correct) result.
-# ITK_VERSION_FULL carries a YYYYMMDD tweak (ITK #6667); unset on older ITK.
-if(ITK_VERSION_FULL VERSION_GREATER_EQUAL 6.0.0.20260715)
-  set(MIH_BASELINE_DIR ${TestData_DIR}/post-ITK6569)
-else()
+if(ITK_VERSION VERSION_LESS 6.0)
   set(MIH_BASELINE_DIR ${TestData_DIR})
+else()
+  set(MIH_BASELINE_DIR ${TestData_DIR}/post-ITK6569)
 endif()
 
 set(BRAINSFitTestName BRAINSFitTest_MIHAffineRotationMasks)
