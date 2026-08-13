@@ -43,14 +43,14 @@
 #include "itksys/Base64.h"
 
 
-#include "itkDCMTKFileReader.h"
+#include "brainsDCMTKFileReader.h"
 #include "itkMatrix.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageSeriesReader.h"
 #include "itkRawImageIO.h"
 #include "itkImage.h"
-#include "itkDCMTKFileReader.h"
+#include "brainsDCMTKFileReader.h"
 #include "itkDCMTKImageIO.h"
 #include "itkNumberToString.h"
 

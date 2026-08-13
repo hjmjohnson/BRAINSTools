@@ -90,7 +90,7 @@ PhilipsDWIConverter::ExtractDWIData()
             // std::cout << "Looking for  0018|9089 in sequence 0018,9076" << std::endl;
             // gdcm::SeqEntry *
             // DiffusionSeqEntry=this->m_Headers[k]->GetSeqEntry(0x0018,0x9076);
-            itk::DCMTKSequence DiffusionSeqEntry;
+            brains::DCMTKSequence DiffusionSeqEntry;
             this->m_Headers[k]->GetElementSQ(0x0018, 0x9076, DiffusionSeqEntry);
             // const unsigned int
             // n=DiffusionSeqEntry->GetNumberOfSQItems();
@@ -110,8 +110,8 @@ PhilipsDWIConverter::ExtractDWIData()
         }
         else
         {
-          float                  tmp[3];
-          itk::DCMTKFileReader * hdr = this->m_Headers[k];
+          float                     tmp[3];
+          brains::DCMTKFileReader * hdr = this->m_Headers[k];
           if (hdr->GetElementFLorOB(0x2005, 0x10b0, tmp[0], false) == EXIT_FAILURE ||
               hdr->GetElementFLorOB(0x2005, 0x10b1, tmp[1], false) == EXIT_FAILURE ||
               hdr->GetElementFLorOB(0x2005, 0x10b2, tmp[2], false) == EXIT_FAILURE)
@@ -167,8 +167,8 @@ PhilipsDWIConverter::ExtractDWIData()
     this->m_BValues.clear();
     this->m_DiffusionVectors.clear();
 
-    itk::DCMTKSequence perFrameFunctionalGroup;
-    double             dwbValue;
+    brains::DCMTKSequence perFrameFunctionalGroup;
+    double                dwbValue;
 
     this->m_Headers[0]->GetElementSQ(0x5200, 0x9230, perFrameFunctionalGroup);
     this->m_NSlice = perFrameFunctionalGroup.card();
@@ -177,11 +177,11 @@ PhilipsDWIConverter::ExtractDWIData()
     std::string origins[2];
     for (unsigned int i = 0; i < this->m_NSlice; ++i)
     {
-      itk::DCMTKItem curItem;
+      brains::DCMTKItem curItem;
       perFrameFunctionalGroup.GetElementItem(i, curItem);
 
       // index slice locations with string origin
-      itk::DCMTKSequence originSeq;
+      brains::DCMTKSequence originSeq;
       curItem.GetElementSQ(0x0020, 0x9113, originSeq);
       std::string originString;
       originSeq.GetElementDS(0x0020, 0x0032, originString);
@@ -193,7 +193,7 @@ PhilipsDWIConverter::ExtractDWIData()
         origins[i] = originString;
       }
 
-      itk::DCMTKSequence mrDiffusionSeq;
+      brains::DCMTKSequence mrDiffusionSeq;
       curItem.GetElementSQ(0x0018, 0x9117, mrDiffusionSeq);
 
       std::string dirValue;
@@ -239,7 +239,7 @@ PhilipsDWIConverter::ExtractDWIData()
             mrDiffusionSeq.GetElementFD(0x0018, 0x9087, dwbValue);
           }
         }
-        itk::DCMTKSequence volSeq;
+        brains::DCMTKSequence volSeq;
         mrDiffusionSeq.GetElementSQ(0x0018, 0x9076, volSeq);
         double dwgVal[3];
         {
@@ -334,31 +334,31 @@ PhilipsDWIConverter::AddFlagsToDictionary()
   // relevant Philips private tags
   auto * PhilipsDictBValue = new DcmDictEntry(
     0x2001, 0x1003, DcmVR(EVR_FL), "B Value of diffusion weighting", 1, 1, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictBValue);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictBValue);
   auto * PhilipsDictDiffusionDirection =
     new DcmDictEntry(0x2001, 0x1004, DcmVR(EVR_CS), "Diffusion Gradient Direction", 1, 1, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirection);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirection);
 
   auto * PhilipsDictDiffusionDirectionRL =
     new DcmDictEntry(0x2005, 0x10b0, DcmVR(EVR_FL), "Diffusion Direction R/L", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionRL);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionRL);
   auto * PhilipsDictDiffusionDirectionAP =
     new DcmDictEntry(0x2005, 0x10b1, DcmVR(EVR_FL), "Diffusion Direction A/P", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionAP);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionAP);
   auto * PhilipsDictDiffusionDirectionFH =
     new DcmDictEntry(0x2005, 0x10b2, DcmVR(EVR_FL), "Diffusion Direction F/H", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionFH);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionFH);
 
   // New data new uses new tags!
   auto * PhilipsDictDiffusionDirectionRLnew =
     new DcmDictEntry(0x2005, 0x12b0, DcmVR(EVR_FL), "Diffusion Direction R/L", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionRLnew);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionRLnew);
   auto * PhilipsDictDiffusionDirectionAPnew =
     new DcmDictEntry(0x2005, 0x12b1, DcmVR(EVR_FL), "Diffusion Direction A/P", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionAPnew);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionAPnew);
   auto * PhilipsDictDiffusionDirectionFHnew =
     new DcmDictEntry(0x2005, 0x12b2, DcmVR(EVR_FL), "Diffusion Direction F/H", 4, 4, nullptr, true, "dicomtonrrd");
-  itk::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionFHnew);
+  brains::DCMTKFileReader::AddDictEntry(PhilipsDictDiffusionDirectionFHnew);
 
   // relevant Philips private tags
 }

@@ -148,8 +148,8 @@ GEDWIConverter::AddFlagsToDictionary()
   auto * GEDictZGradient = new DcmDictEntry(
     0x0019, 0x10bd, DcmVR(EVR_DS), "Z component of gradient direction", 1, 1, nullptr, true, "dicomtonrrd");
 
-  itk::DCMTKFileReader::AddDictEntry(GEDictBValue);
-  itk::DCMTKFileReader::AddDictEntry(GEDictXGradient);
-  itk::DCMTKFileReader::AddDictEntry(GEDictYGradient);
-  itk::DCMTKFileReader::AddDictEntry(GEDictZGradient);
+  brains::DCMTKFileReader::AddDictEntry(GEDictBValue);
+  brains::DCMTKFileReader::AddDictEntry(GEDictXGradient);
+  brains::DCMTKFileReader::AddDictEntry(GEDictYGradient);
+  brains::DCMTKFileReader::AddDictEntry(GEDictZGradient);
 }

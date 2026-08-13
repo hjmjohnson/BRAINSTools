@@ -488,15 +488,15 @@ DWIDICOMConverterBase::getDicomSpacing(double * const spacing) const
   };
   for (unsigned short candidateSequence : candidateSequences)
   {
-    itk::DCMTKSequence spacingSequence;
+    brains::DCMTKSequence spacingSequence;
     rval = m_Headers[0]->GetElementSQ(0x5200, candidateSequence, spacingSequence, false);
     if (rval == EXIT_SUCCESS)
     {
-      itk::DCMTKItem item;
+      brains::DCMTKItem item;
       rval = spacingSequence.GetElementItem(0, item, false);
       if (rval == EXIT_SUCCESS)
       {
-        itk::DCMTKSequence subSequence;
+        brains::DCMTKSequence subSequence;
         // Pixel Measures Sequence
         rval = item.GetElementSQ(0x0028, 0x9110, subSequence, false);
         if (rval == EXIT_SUCCESS)
@@ -556,7 +556,7 @@ DWIDICOMConverterBase::TryExtractSupp49DWIData()
 
   for (unsigned int k = 0; k < this->m_NSlice; k += this->m_SlicesPerVolume)
   {
-    itk::DCMTKSequence sharedFGS;
+    brains::DCMTKSequence sharedFGS;
     // (5200,9229) SharedFunctionalGroupsSequence
     if (this->m_Headers[k]->GetElementSQ(0x5200, 0x9229, sharedFGS) != EXIT_SUCCESS)
     {
