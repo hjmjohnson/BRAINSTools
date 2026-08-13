@@ -16,7 +16,7 @@
  *
  *=========================================================================*/
 
-#include "itkDCMTKFileReader.h"
+#include "brainsDCMTKFileReader.h"
 #undef HAVE_SSTREAM // 'twould be nice if people coded without using
 // incredibly generic macro names
 #include "dcmtk/config/osconfig.h" // make sure OS specific configuration is included first
@@ -53,7 +53,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace itk
+namespace brains
 {
 
 void
@@ -1473,4 +1473,4 @@ CompareDCMTKFileReaders(DCMTKFileReader * a, DCMTKFileReader * b)
   return a->GetFileNumber() < b->GetFileNumber();
 }
 
-} // namespace itk
+} // namespace brains

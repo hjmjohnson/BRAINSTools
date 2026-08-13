@@ -25,7 +25,7 @@ enable_testing()
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_LIST_DIR})
 
 set(DWIConvertSupportLib_SRCS
-  itkDCMTKFileReader.cxx
+  brainsDCMTKFileReader.cxx
 #  FSLToNrrd.cxx
 #  NrrdToFSL.cxx
   NRRDDWIConverter.h

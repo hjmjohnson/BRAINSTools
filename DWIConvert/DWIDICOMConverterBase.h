@@ -11,7 +11,7 @@
 #include "itkMacro.h"
 #include "itkDCMTKImageIO.h"
 #include "itkImage.h"
-#include "itkDCMTKFileReader.h"
+#include "brainsDCMTKFileReader.h"
 #include "itkNumberToString.h"
 #include "DWIConvertUtils.h"
 
@@ -19,7 +19,7 @@ class DWIDICOMConverterBase : public DWIConverter
 {
 public:
   using InputNamesGeneratorType = itk::DCMTKSeriesFileNames;
-  using DCMTKFileVector = std::vector<itk::DCMTKFileReader *>;
+  using DCMTKFileVector = std::vector<brains::DCMTKFileReader *>;
 
   DWIDICOMConverterBase(DCMTKFileVector            allHeaders,
                         const FileNamesContainer & inputFileNames,

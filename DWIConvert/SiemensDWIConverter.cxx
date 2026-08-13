@@ -696,10 +696,10 @@ SiemensDWIConverter::AddFlagsToDictionary()
     new DcmDictEntry(0x0029, 0x1010, DcmVR(EVR_OB), "Siemens DWI Info", 1, 1, nullptr, true, "dicomtonrrd");
 
   // relevant Siemens private tags
-  itk::DCMTKFileReader::AddDictEntry(SiemensMosiacParameters);
-  itk::DCMTKFileReader::AddDictEntry(SiemensDictNMosiac);
-  itk::DCMTKFileReader::AddDictEntry(SiemensDictBValue);
-  itk::DCMTKFileReader::AddDictEntry(SiemensDictDiffusionDirection);
-  itk::DCMTKFileReader::AddDictEntry(SiemensDictDiffusionMatrix);
-  itk::DCMTKFileReader::AddDictEntry(SiemensDictShadowInfo);
+  brains::DCMTKFileReader::AddDictEntry(SiemensMosiacParameters);
+  brains::DCMTKFileReader::AddDictEntry(SiemensDictNMosiac);
+  brains::DCMTKFileReader::AddDictEntry(SiemensDictBValue);
+  brains::DCMTKFileReader::AddDictEntry(SiemensDictDiffusionDirection);
+  brains::DCMTKFileReader::AddDictEntry(SiemensDictDiffusionMatrix);
+  brains::DCMTKFileReader::AddDictEntry(SiemensDictShadowInfo);
 }

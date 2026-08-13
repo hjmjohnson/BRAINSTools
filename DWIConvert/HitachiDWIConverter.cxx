@@ -32,7 +32,7 @@ HitachiDWIConverter::ExtractDWIData()
 {
   for (unsigned int k = 0; k < this->m_NSlice; k += this->m_SlicesPerVolume)
   {
-    itk::DCMTKSequence SharedFunctionalGroupsSequence;
+    brains::DCMTKSequence SharedFunctionalGroupsSequence;
     this->m_Headers[k]->GetElementSQ(0x5200, 0x9229, SharedFunctionalGroupsSequence);
     double b = 0.0;
     SharedFunctionalGroupsSequence.GetElementFD(0x0018, 0x9087, b);

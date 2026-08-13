@@ -15,16 +15,11 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef itkDCMTKFileReader_h
-#define itkDCMTKFileReader_h
+#ifndef brainsDCMTKFileReader_h
+#define brainsDCMTKFileReader_h
 
-// Vendored copy: define the ITKIODCMTK export macros as no-ops so the
-// reader builds directly into the consuming module (parity with
-// SlicerExt PETDICOMExtension/SUVFactorCalculatorCLI). Sourced from ITK
-// Modules/IO/DCMTK/src after ITK commit db492d9b09 made the header private.
-#ifndef ITKIODCMTK_EXPORT
-#  define ITKIODCMTK_EXPORT
-#endif
+// Vendored from ITK Modules/IO/DCMTK/src. The brains namespace keeps these
+// definitions distinct from the ones ITK still exports from ITKIODCMTK.
 #include <stack>
 #include <vector>
 #include "itkByteSwapper.h"
@@ -42,6 +37,7 @@
 #include "itkMacro.h"
 #include "itkImageIOBase.h"
 #include "itkMetaDataDictionary.h"
+#include "itkMetaDataObject.h"
 
 class DcmSequenceOfItems;
 class DcmFileFormat;
@@ -50,24 +46,34 @@ class DcmDictEntry;
 // Don't print error messages if you're not throwing
 // an exception
 //     std::cerr body;
-#define DCMTKExceptionOrErrorReturn(body) \
-  {                                       \
-    if (throwException)                   \
-    {                                     \
-      itkGenericExceptionMacro(body);     \
-    }                                     \
-    else                                  \
-    {                                     \
-      return EXIT_FAILURE;                \
-    }                                     \
-  }
+#ifndef DCMTKExceptionOrErrorReturn
+#  define DCMTKExceptionOrErrorReturn(body) \
+    {                                       \
+      if (throwException)                   \
+      {                                     \
+        itkGenericExceptionMacro(body);     \
+      }                                     \
+      else                                  \
+      {                                     \
+        return EXIT_FAILURE;                \
+      }                                     \
+    }
+#endif
 
-namespace itk
+namespace brains
 {
-// Forward reference because of circular dependencies
-class ITK_FORWARD_EXPORT DCMTKSequence;
+// Keep the vendored bodies textually identical to ITK's, which name these
+// unqualified from within namespace itk.
+using itk::EncapsulateMetaData;
+using itk::IOComponentEnum;
+using itk::IOPixelEnum;
+using itk::MetaDataDictionary;
+using itk::SizeValueType;
 
-class ITKIODCMTK_EXPORT DCMTKItem
+// Forward reference because of circular dependencies
+class DCMTKSequence;
+
+class DCMTKItem
 {
 public:
   DCMTKItem() = default;
@@ -84,7 +90,7 @@ private:
   DcmItem * m_DcmItem{ nullptr };
 };
 
-class ITKIODCMTK_EXPORT DCMTKSequence
+class DCMTKSequence
 {
 public:
   DCMTKSequence() = default;
@@ -247,7 +253,7 @@ private:
   DcmSequenceOfItems * m_DcmSequenceOfItems{ nullptr };
 };
 
-class ITKIODCMTK_EXPORT DCMTKFileReader
+class DCMTKFileReader
 {
 public:
   using Self = DCMTKFileReader;
@@ -526,6 +532,6 @@ private:
 
 extern bool
 CompareDCMTKFileReaders(DCMTKFileReader * a, DCMTKFileReader * b);
-} // namespace itk
+} // namespace brains
 
-#endif // itkDCMTKFileReader_h
+#endif // brainsDCMTKFileReader_h

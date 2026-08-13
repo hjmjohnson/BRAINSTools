@@ -20,7 +20,7 @@
 #define __DWIConverterFactory_h
 
 #include "itkImageSeriesReader.h"
-#include "itkDCMTKFileReader.h"
+#include "brainsDCMTKFileReader.h"
 #include "itksys/SystemTools.hxx"
 #include "DWIConverter.h"
 #include "PhilipsDWIConverter.h"

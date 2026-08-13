@@ -82,7 +82,7 @@ DWIConverterFactory::New()
     int                                 headerCount = 0;
     for( unsigned i = 0; i < m_Headers.size(); ++i )
     {
-      itk::DCMTKFileReader *curReader = new itk::DCMTKFileReader;
+      brains::DCMTKFileReader *curReader = new brains::DCMTKFileReader;
       curReader->SetFileName(m_InputFileNames[i]);
       try
       {
@@ -114,7 +114,7 @@ DWIConverterFactory::New()
     int headerCount = 0;
     for (auto & m_InputFileName : m_InputFileNames)
     {
-      auto * curReader = new itk::DCMTKFileReader;
+      auto * curReader = new brains::DCMTKFileReader;
       curReader->SetFileName(m_InputFileName);
       try
       {
