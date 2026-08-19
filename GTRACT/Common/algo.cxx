@@ -40,19 +40,24 @@
 // pseudo-inverse below, when a new-enough ITK provides it. Gated on a
 // compile-time capability check so this still builds against the currently
 // pinned ITK (legacy vnl_matrix_inverse path).
-#if __has_include(<itkMathLDLT.h>)
+#if __has_include(<itkBridgeMathLDLT.h>)
+#  include <itkBridgeMathLDLT.h>
+#elif __has_include(<itkMathLDLT.h>)
 #  include <itkMathLDLT.h>
 #endif
 
 namespace
 {
-// Inverse of a SYMMETRIC matrix. With itk::Math::SolveSymmetric available, build
-// the inverse column-by-column via LDLT solves (A X = I); otherwise fall back to
-// vnl_matrix_inverse. (M^T M in the normal equations is symmetric PD.)
+// Inverse of a SYMMETRIC matrix. With itk::bridge::Math::SolveSymmetric
+// available, build the inverse column-by-column via LDLT solves (A X = I);
+// otherwise fall back to vnl_matrix_inverse. (M^T M in the normal equations
+// is symmetric PD.)
 inline vnl_matrix<float>
 SymmetricInverse(const vnl_matrix<float> & A)
 {
-#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+#if defined(ITK_BRIDGE_MATH_HAS_SOLVE_SYMMETRIC)
+  return itk::bridge::Math::InverseSymmetric(A);
+#elif defined(ITK_MATH_HAS_SOLVE_SYMMETRIC)
   return itk::Math::InverseSymmetric(A);
 #else
   return vnl_matrix_inverse<float>(A).inverse();
