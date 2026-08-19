@@ -80,7 +80,9 @@
 // covariance inverse below, when a new-enough ITK provides it. Gated on a
 // compile-time capability check so this still builds against the currently
 // pinned ITK (legacy vnl_matrix_inverse path).
-#if __has_include(<itkMathLDLT.h>)
+#if __has_include(<itkBridgeMathLDLT.h>)
+#  include <itkBridgeMathLDLT.h>
+#elif __has_include(<itkMathLDLT.h>)
 #  include <itkMathLDLT.h>
 #endif
 namespace em_detail
@@ -91,7 +93,9 @@ namespace em_detail
 inline vnl_matrix<double>
 SymmetricInverse(const vnl_matrix<double> & A)
 {
-#ifdef ITK_MATH_HAS_SOLVE_SYMMETRIC
+#if defined(ITK_BRIDGE_MATH_HAS_SOLVE_SYMMETRIC)
+  return itk::bridge::Math::InverseSymmetric(A);
+#elif defined(ITK_MATH_HAS_SOLVE_SYMMETRIC)
   return itk::Math::InverseSymmetric(A);
 #else
   return vnl_matrix_inverse<double>(A).inverse();
