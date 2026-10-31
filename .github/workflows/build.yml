@@ -35,6 +35,18 @@ on:
   schedule:
     - cron: '0 8 * * 1'
   workflow_dispatch:
+    inputs:
+      itk_ref:
+        description: 'ITK branch, tag, or SHA to build against (empty = the pinned release)'
+        required: false
+        default: ''
+        type: string
+  workflow_call:
+    inputs:
+      itk_ref:
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: '${{ github.workflow }}@${{ github.head_ref || github.ref }}'
@@ -84,6 +96,33 @@ jobs:
       # ── Checkout & version extraction ─────────────────────────────────────────
       - uses: actions/checkout@v5
 
+      - name: Resolve ITK ref
+        id: itk
+        shell: bash
+        env:
+          ITK_REF: ${{ inputs.itk_ref }}
+        run: |
+          # Empty ITK_REF keeps the SuperBuild's pinned ITK; otherwise build the commit
+          # the ref points at now, so ccache keys and the log name an exact SHA.
+          if [ -z "${ITK_REF}" ]; then
+            { echo "sha="; echo "keytag="; echo "cdash="; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if echo "${ITK_REF}" | grep -qE '^[0-9a-f]{40}$'; then
+            SHA="${ITK_REF}"
+          else
+            SHA=$(git ls-remote https://github.com/InsightSoftwareConsortium/ITK.git \
+                    "refs/heads/${ITK_REF}" "refs/tags/${ITK_REF}" | head -1 | cut -f1)
+          fi
+          if [ -z "${SHA}" ]; then
+            echo "::error::ITK ref '${ITK_REF}' not found"
+            exit 1
+          fi
+          TAG=itk-other
+          [ "${ITK_REF}" = "main" ] && TAG=itk-main
+          { echo "sha=${SHA}"; echo "keytag=${TAG}-"; echo "cdash=:${TAG}"; } >> "$GITHUB_OUTPUT"
+          echo "### Built against ITK ${ITK_REF} @ ${SHA}" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Extract BRAINSTools version
         id: btversion
         shell: bash
@@ -98,15 +137,17 @@ jobs:
       - name: Compute CDash build-name suffix
         id: cdash_suffix
         shell: bash
-        run: |
+        env:
           # PR number: set for pull_request events, empty for push events.
-          PR_NUM="${{ github.event.number }}"
-          # Branch name: head_ref (PRs) or ref_name (direct pushes).
-          BRANCH="${{ github.head_ref || github.ref_name }}"
+          PR_NUM: ${{ github.event.number }}
+          # Branch name: head_ref (PRs) or ref_name (direct pushes); attacker-controlled, so never inline it.
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          ITK_CDASH: ${{ steps.itk.outputs.cdash }}
+        run: |
           # Slugify: lowercase, collapse non-alphanumeric runs to '-', strip edges.
           SLUG=$(echo "${BRANCH}" | tr '[:upper:]' '[:lower:]' \
                    | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//')
-          SUFFIX=":${PR_NUM:-0}:${SLUG}"
+          SUFFIX=":${PR_NUM:-0}:${SLUG}${ITK_CDASH}"
           echo "suffix=${SUFFIX}" >> "$GITHUB_OUTPUT"
           echo "CDash BuildName suffix: ${SUFFIX}"
 
@@ -204,9 +245,9 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/ccache
-          key: ccache-v2-${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-${{ github.sha }}
+          key: ccache-v2-${{ steps.itk.outputs.keytag }}${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-${{ github.sha }}
           restore-keys: |
-            ccache-v2-${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-
+            ccache-v2-${{ steps.itk.outputs.keytag }}${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-
 
       - name: Show ccache config and stats
         shell: bash
@@ -267,6 +308,7 @@ jobs:
             -DEXTERNAL_PROJECT_BUILD_TYPE:STRING=Release \
             -DBUILD_TESTING=ON \
             -DBUILD_SHARED_LIBS=ON \
+            ${{ steps.itk.outputs.sha && format('-DBRAINSTools_ITKv5_GIT_TAG:STRING={0}', steps.itk.outputs.sha) || '' }} \
             -DBRAINSTools_REQUIRES_VTK=ON \
             -DBRAINSTools_USE_GIT_PROTOCOL:BOOL=OFF \
             -DBRAINSTools_BUILD_DICOM_SUPPORT:BOOL=ON \
@@ -330,7 +372,7 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/ccache
-          key: ccache-v2-${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-${{ github.sha }}
+          key: ccache-v2-${{ steps.itk.outputs.keytag }}${{ runner.os }}-${{ steps.toolchain.outputs.image }}-${{ matrix.config.cxx }}${{ steps.toolchain.outputs.compiler_major }}-${{ github.sha }}
 
       - name: Show ccache statistics
         if: always()
@@ -536,7 +578,7 @@ jobs:
       # the compiler cache is saved, so sanitized objects never enter it.
       - name: "Sanitizers: Rebuild inner BRAINSTools with ASan and UBSan"
         id: sanitizer_build
-        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ !cancelled() && matrix.config.os == 'ubuntu-latest' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.itk_ref }}
         working-directory: build/BRAINSTools-Release-EPRelease-build
         shell: bash
         # GoogleTest discovery runs each test binary during the build.

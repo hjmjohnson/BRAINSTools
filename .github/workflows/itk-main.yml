@@ -1,0 +1,60 @@
+name: ITK main
+
+# Builds and tests BRAINSTools against the newest commit of ITK main on every
+# pull request and push to main, and nightly, so API changes that break
+# BRAINSTools are seen immediately instead of at the next ITK release.  It is
+# a separate check from CI; branch protection decides whether it gates a merge.
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'Documentation/**'
+      - '.github/CONTRIBUTING.md'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/labels/**'
+      - 'Utilities/Maintenance/**'
+      - 'Utilities/misc/**'
+      - 'legal/**'
+      - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'Documentation/**'
+      - '.github/CONTRIBUTING.md'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/labels/**'
+      - 'Utilities/Maintenance/**'
+      - 'Utilities/misc/**'
+      - 'legal/**'
+      - 'docs/**'
+  # Seeds main's ccache for pull requests to restore.
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      itk_ref:
+        description: 'ITK branch, tag, or SHA to build against'
+        required: false
+        default: 'main'
+        type: string
+
+concurrency:
+  group: '${{ github.workflow }}@${{ github.head_ref || github.ref }}'
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      itk_ref: ${{ inputs.itk_ref || 'main' }}
+    secrets: inherit
